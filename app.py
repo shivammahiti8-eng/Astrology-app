@@ -1,13 +1,8 @@
 from datetime import datetime, time
+import json
+import urllib.error
+import urllib.request
 import streamlit as st
-
-# Safe import to prevent red error screens
-try:
-    import google.generativeai as genai
-
-    HAS_GENAI = True
-except ModuleNotFoundError:
-    HAS_GENAI = False
 
 # 1. Page Configuration & Custom Mystical Glassmorphism UI
 st.set_page_config(
@@ -97,12 +92,6 @@ st.markdown(
 )
 st.markdown("---")
 
-# Package Missing Alert
-if not HAS_GENAI:
-    st.warning(
-        "⚠️ `google-generativeai` package is currently installing... Please make sure `requirements.txt` is committed on GitHub and tap 'Reboot App' in Streamlit menu if needed!"
-    )
-
 # 4. System Instruction for Gemini
 SYSTEM_INSTRUCTION = f"""
 You are an expert, deeply analytical Vedic Astrologer with 70 years of experience in Parashari Jyotish, Jaimini Sutras, Dashas, and Gochar (planetary transits). 
@@ -127,6 +116,39 @@ YOUR MANDATE:
 * [Option 3: A question regarding remedies, mindset, or practical steps]
 """
 
+
+# Direct REST API helper (uses Python standard library, requiring no pip packages)
+def call_gemini_api(key, system_instruction, chat_history, current_prompt):
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={key}"
+
+    contents = []
+    for msg in chat_history:
+        role = "user" if msg["role"] == "user" else "model"
+        contents.append({"role": role, "parts": [{"text": msg["content"]}]})
+
+    contents.append({"role": "user", "parts": [{"text": current_prompt}]})
+
+    payload = {
+        "system_instruction": {"parts": [{"text": system_instruction}]},
+        "contents": contents,
+    }
+
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(
+        url, data=data, headers={"Content-Type": "application/json"}
+    )
+
+    try:
+        with urllib.request.urlopen(req) as response:
+            result = json.loads(response.read().decode("utf-8"))
+            return result["candidates"][0]["content"]["parts"][0]["text"]
+    except urllib.error.HTTPError as e:
+        error_info = e.read().decode("utf-8")
+        raise Exception(f"API Key or Request Error ({e.code}): {error_info}")
+    except Exception as e:
+        raise Exception(f"Request failed: {str(e)}")
+
+
 # 5. Initialize Chat History Session State
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -141,15 +163,9 @@ if user_prompt := st.chat_input(
     "Ask any detailed question about your Kundali, transits, career, life, or future..."
 ):
 
-    if not api_key:
+    if not api_key.strip():
         st.warning(
-            "⚠️ Please enter a free Gemini API Key in the left sidebar to start chatting! (Get one in 10 seconds at aistudio.google.com)"
-        )
-        st.stop()
-
-    if not HAS_GENAI:
-        st.error(
-            "⚠️ Installing `google-generativeai` package on Streamlit server... Please wait a few seconds and try again!"
+            "⚠️ Please enter your free Gemini API Key in the left sidebar to start chatting!"
         )
         st.stop()
 
@@ -158,39 +174,21 @@ if user_prompt := st.chat_input(
     with st.chat_message("user"):
         st.markdown(user_prompt)
 
-    # Configure Gemini AI Engine
-    try:
-        genai.configure(api_key=api_key)
-
-        # Reconstruct chat history for Gemini to ensure true context memory
-        gemini_history = []
-        for msg in st.session_state.messages[:-1]:
-            role = "user" if msg["role"] == "user" else "model"
-            gemini_history.append({"role": role, "parts": [msg["content"]]})
-
-        # Load Gemini Model
-        model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
-            system_instruction=SYSTEM_INSTRUCTION,
-        )
-
-        chat_session = model.start_chat(history=gemini_history)
-
-        # Generate Deep AI Response
-        with st.chat_message("assistant"):
-            with st.spinner(
-                "Analyzing Kundali, house lords, and transit matrices..."
-            ):
-                response = chat_session.send_message(user_prompt)
-                response_text = response.text
+    # Call Gemini via direct API request
+    with st.chat_message("assistant"):
+        with st.spinner(
+            "Analyzing Kundali, house lords, and transit matrices..."
+        ):
+            try:
+                response_text = call_gemini_api(
+                    api_key.strip(),
+                    SYSTEM_INSTRUCTION,
+                    st.session_state.messages[:-1],
+                    user_prompt,
+                )
                 st.markdown(response_text)
-
-        # Append Assistant Response to Session Memory
-        st.session_state.messages.append(
-            {"role": "assistant", "content": response_text}
-        )
-
-    except Exception as e:
-        st.error(
-            f"An error occurred while connecting to Gemini AI: {str(e)}. Please check your API Key."
-)
+                st.session_state.messages.append(
+                    {"role": "assistant", "content": response_text}
+                )
+            except Exception as e:
+                st.error(f"Error generating reading: {str(e)}")
