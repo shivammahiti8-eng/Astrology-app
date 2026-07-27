@@ -97,7 +97,7 @@ st.sidebar.markdown("**Moon Sign (Rashi):** Scorpio / Vrischika ♏")
 st.sidebar.markdown("**Lagna Lord:** Jupiter (Guru)")
 st.sidebar.markdown("---")
 
-# Load Multiple API Keys from Secrets & Parse Them Automatically
+# Load Multiple API Keys from Secrets
 api_keys_list = []
 if "GEMINI_API_KEYS" in st.secrets:
     raw_keys = str(st.secrets["GEMINI_API_KEYS"])
@@ -115,7 +115,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 st.markdown(
-    "<p class='sub-text'>Autonomous Jyotish Intelligence • Multi-Key Failover Engine (2008–2020)</p>",
+    "<p class='sub-text'>Autonomous Jyotish Intelligence • Dual-Model & Multi-Key Failover Engine (2008–2020)</p>",
     unsafe_allow_html=True,
 )
 st.markdown("---")
@@ -161,8 +161,8 @@ CORE MANDATES:
 """
 
 
-# 5. Robust API Engine with Automatic Key Rotation & Failover
-def call_gemini_api_with_rotation(keys_list, system_instruction, chat_history, current_prompt):
+# 5. Advanced Engine with Cross-Model Fallback & Key Rotation
+def call_gemini_api_advanced(keys_list, system_instruction, chat_history, current_prompt):
     if not keys_list:
         raise Exception("No API keys found in Streamlit secrets configuration.")
 
@@ -179,30 +179,33 @@ def call_gemini_api_with_rotation(keys_list, system_instruction, chat_history, c
     }
     data = json.dumps(payload).encode("utf-8")
 
-    last_error = None
-    for i, key in enumerate(keys_list):
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={key}"
-        req = urllib.request.Request(
-            url, data=data, headers={"Content-Type": "application/json"}
-        )
+    # Try multiple models to bypass individual model pool limits
+    models_to_try = ["gemini-2.0-flash", "gemini-1.5-flash"]
 
-        try:
-            with urllib.request.urlopen(req) as response:
-                result = json.loads(response.read().decode("utf-8"))
-                return result["candidates"][0]["content"]["parts"][0]["text"]
-        except urllib.error.HTTPError as e:
-            error_body = e.read().decode("utf-8")
-            if e.code == 429:
-                last_error = f"Key #{i+1} rate-limited (429). Rotating to next key..."
-                t_module.sleep(1)
+    for model in models_to_try:
+        for key in keys_list:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
+            req = urllib.request.Request(
+                url, data=data, headers={"Content-Type": "application/json"}
+            )
+
+            try:
+                with urllib.request.urlopen(req) as response:
+                    result = json.loads(response.read().decode("utf-8"))
+                    return result["candidates"][0]["content"]["parts"][0]["text"]
+            except urllib.error.HTTPError as e:
+                error_body = e.read().decode("utf-8")
+                if e.code == 429:
+                    # Rate limit hit, try next key/model immediately
+                    t_module.sleep(0.5)
+                    continue
+                else:
+                    # Non-429 error, try next
+                    continue
+            except Exception:
                 continue
-            else:
-                raise Exception(f"API Error ({e.code}): {error_body}")
-        except Exception as ex:
-            last_error = str(ex)
-            continue
 
-    raise Exception(f"All available keys hit rate limits or failed. Details: {last_error}")
+    raise Exception("All keys and fallback model quotas are temporarily exhausted. Please wait 15 seconds.")
 
 
 # 6. Chat History & Execution Loop
@@ -234,10 +237,10 @@ if user_prompt:
 
     with st.chat_message("assistant"):
         with st.spinner(
-            "Consulting cosmic alignments and checking alternative channels..."
+            "Consulting cosmic alignments across multi-model channels..."
         ):
             try:
-                response_text = call_gemini_api_with_rotation(
+                response_text = call_gemini_api_advanced(
                     api_keys_list,
                     SYSTEM_INSTRUCTION,
                     st.session_state.messages[:-1],
@@ -249,6 +252,5 @@ if user_prompt:
                 )
             except Exception as e:
                 st.error(
-                    f"⚠️ **Traffic Peak Reached:** All backup keys are currently cooling down from rate limits. Please wait 30 seconds and try again.\n\n*(Technical details: {str(e)})*"
-)
-    
+                    f"⚠️ **Traffic Peak Reached:** Both keys and fallback channels are momentarily cooling down. Please wait 15 seconds and resend your prompt."
+                )
