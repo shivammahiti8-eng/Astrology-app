@@ -1,10 +1,11 @@
 from datetime import datetime, time
 import json
+import time as t_module
 import urllib.error
 import urllib.request
 import streamlit as st
 
-# 1. Page Configuration & Custom Mystical High-Contrast Dark UI
+# 1. Page Configuration & Custom High-Contrast Dark UI
 st.set_page_config(
     page_title="Vedic AI Cosmic Guru",
     page_icon="🌌",
@@ -15,13 +16,10 @@ st.set_page_config(
 st.markdown(
     """
 <style>
-    /* Background & Main Color Adjustments for Maximum Contrast */
     .stApp {
         background: linear-gradient(135deg, #0a0618 0%, #11092b 50%, #1a0826 100%);
         color: #f8fafc !important;
     }
-    
-    /* Sidebar Styling */
     section[data-testid="stSidebar"] {
         background-color: #0c081d !important;
         border-right: 1px solid rgba(234, 179, 8, 0.3);
@@ -29,30 +27,22 @@ st.markdown(
     section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] label {
         color: #f1f5f9 !important;
     }
-
-    /* Message Cards - High Contrast Text Fix */
     .stChatMessage {
         border-radius: 12px !important;
         padding: 16px !important;
         margin-bottom: 12px !important;
         color: #f8fafc !important;
     }
-    
-    /* User Message Container */
     div[data-testid="stChatMessage"]:nth-child(even) {
         background-color: rgba(88, 28, 135, 0.45) !important;
         border: 1px solid #a855f7 !important;
         color: #ffffff !important;
     }
-    
-    /* Assistant Message Container */
     div[data-testid="stChatMessage"]:nth-child(odd) {
         background-color: rgba(15, 23, 42, 0.8) !important;
         border: 1px solid #eab308 !important;
         color: #f8fafc !important;
     }
-
-    /* Target all text elements in chat to prevent low contrast invisible text */
     div[data-testid="stChatMessage"] p, 
     div[data-testid="stChatMessage"] li, 
     div[data-testid="stChatMessage"] span, 
@@ -61,8 +51,6 @@ st.markdown(
     div[data-testid="stChatMessage"] h3 {
         color: #f8fafc !important;
     }
-
-    /* Button Styling */
     .stButton>button {
         color: #fef08a !important;
         background-color: #1e1b4b !important;
@@ -76,8 +64,6 @@ st.markdown(
         border-color: #fde047 !important;
         color: #ffffff !important;
     }
-
-    /* Header Title Formatting */
     .title-text {
         background: linear-gradient(90deg, #fef08a 0%, #f59e0b 50%, #c084fc 100%);
         -webkit-background-clip: text;
@@ -95,7 +81,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# 2. Sidebar Setup & Profile Parameters (No manual key input required)
+# 2. Sidebar Setup & Profile Parameters
 st.sidebar.markdown("## 🔮 Astrological Profile")
 
 birth_date = st.sidebar.date_input("Date of Birth", value=datetime(2008, 12, 26))
@@ -111,10 +97,13 @@ st.sidebar.markdown("**Moon Sign (Rashi):** Scorpio / Vrischika ♏")
 st.sidebar.markdown("**Lagna Lord:** Jupiter (Guru)")
 st.sidebar.markdown("---")
 
-# Automatically pull master API key from Streamlit secrets (App-native AI backend)
-app_native_api_key = ""
-if "GEMINI_API_KEY" in st.secrets:
-    app_native_api_key = str(st.secrets["GEMINI_API_KEY"]).strip().replace('"', "").replace("'", "")
+# Load Multiple API Keys from Secrets & Parse Them Automatically
+api_keys_list = []
+if "GEMINI_API_KEYS" in st.secrets:
+    raw_keys = str(st.secrets["GEMINI_API_KEYS"])
+    api_keys_list = [k.strip().replace('"', "").replace("'", "") for k in raw_keys.split(",") if k.strip()]
+elif "GEMINI_API_KEY" in st.secrets:
+    api_keys_list = [str(st.secrets["GEMINI_API_KEY"]).strip().replace('"', "").replace("'", "")]
 
 if st.sidebar.button("🗑️ Clear Chat / Start New Session"):
     st.session_state.messages = []
@@ -126,12 +115,11 @@ st.markdown(
     unsafe_allow_html=True,
 )
 st.markdown(
-    "<p class='sub-text'>Autonomous Jyotish Intelligence • Past Retrospective (2008–2020) • Future Dynamics</p>",
+    "<p class='sub-text'>Autonomous Jyotish Intelligence • Multi-Key Failover Engine (2008–2020)</p>",
     unsafe_allow_html=True,
 )
 st.markdown("---")
 
-# Quick Prompt Helper Buttons
 col1, col2 = st.columns(2)
 with col1:
     if st.button("📜 Verify My Past (2008 to 2020 Retrospective)"):
@@ -173,9 +161,10 @@ CORE MANDATES:
 """
 
 
-# REST API Call using gemini-2.0-flash natively via backend secrets
-def call_gemini_api(key, system_instruction, chat_history, current_prompt):
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={key}"
+# 5. Robust API Engine with Automatic Key Rotation & Failover
+def call_gemini_api_with_rotation(keys_list, system_instruction, chat_history, current_prompt):
+    if not keys_list:
+        raise Exception("No API keys found in Streamlit secrets configuration.")
 
     contents = []
     for msg in chat_history:
@@ -188,33 +177,42 @@ def call_gemini_api(key, system_instruction, chat_history, current_prompt):
         "system_instruction": {"parts": [{"text": system_instruction}]},
         "contents": contents,
     }
-
     data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        url, data=data, headers={"Content-Type": "application/json"}
-    )
 
-    try:
-        with urllib.request.urlopen(req) as response:
-            result = json.loads(response.read().decode("utf-8"))
-            return result["candidates"][0]["content"]["parts"][0]["text"]
-    except urllib.error.HTTPError as e:
-        error_info = e.read().decode("utf-8")
-        raise Exception(f"API Error ({e.code}): {error_info}")
-    except Exception as e:
-        raise Exception(f"Request failed: {str(e)}")
+    last_error = None
+    for i, key in enumerate(keys_list):
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={key}"
+        req = urllib.request.Request(
+            url, data=data, headers={"Content-Type": "application/json"}
+        )
+
+        try:
+            with urllib.request.urlopen(req) as response:
+                result = json.loads(response.read().decode("utf-8"))
+                return result["candidates"][0]["content"]["parts"][0]["text"]
+        except urllib.error.HTTPError as e:
+            error_body = e.read().decode("utf-8")
+            if e.code == 429:
+                last_error = f"Key #{i+1} rate-limited (429). Rotating to next key..."
+                t_module.sleep(1)
+                continue
+            else:
+                raise Exception(f"API Error ({e.code}): {error_body}")
+        except Exception as ex:
+            last_error = str(ex)
+            continue
+
+    raise Exception(f"All available keys hit rate limits or failed. Details: {last_error}")
 
 
-# 5. Chat History & Execution Loop
+# 6. Chat History & Execution Loop
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Render past chat history
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# User Chat Input
 user_prompt = st.chat_input(
     "Ask anything about your past (2008-2020), future transits, career, or life..."
 )
@@ -224,25 +222,23 @@ if "pending_prompt" in st.session_state and st.session_state.pending_prompt:
     st.session_state.pending_prompt = None
 
 if user_prompt:
-    if not app_native_api_key:
+    if not api_keys_list:
         st.error(
-            "⚙️ **System Configuration Error:** The app-native API key is missing from Streamlit secrets. Please add `GEMINI_API_KEY` to your Streamlit Cloud App Secrets."
+            "⚙️ **Configuration Required:** Please add your `GEMINI_API_KEYS` (separated by commas) into your Streamlit Cloud App Settings under 'Secrets'."
         )
         st.stop()
 
-    # Append and render user message
     st.session_state.messages.append({"role": "user", "content": user_prompt})
     with st.chat_message("user"):
         st.markdown(user_prompt)
 
-    # Call AI model and render response
     with st.chat_message("assistant"):
         with st.spinner(
-            "Analyzing Dasha timelines, transits, and planetary positions..."
+            "Consulting cosmic alignments and checking alternative channels..."
         ):
             try:
-                response_text = call_gemini_api(
-                    app_native_api_key,
+                response_text = call_gemini_api_with_rotation(
+                    api_keys_list,
                     SYSTEM_INSTRUCTION,
                     st.session_state.messages[:-1],
                     user_prompt,
@@ -252,4 +248,7 @@ if user_prompt:
                     {"role": "assistant", "content": response_text}
                 )
             except Exception as e:
-                st.error(f"Error generating response: {str(e)}")
+                st.error(
+                    f"⚠️ **Traffic Peak Reached:** All backup keys are currently cooling down from rate limits. Please wait 30 seconds and try again.\n\n*(Technical details: {str(e)})*"
+)
+    
