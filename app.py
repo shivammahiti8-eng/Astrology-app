@@ -1,6 +1,13 @@
 from datetime import datetime, time
-import google.generativeai as genai
 import streamlit as st
+
+# Safe import to prevent red error screens
+try:
+    import google.generativeai as genai
+
+    HAS_GENAI = True
+except ModuleNotFoundError:
+    HAS_GENAI = False
 
 # 1. Page Configuration & Custom Mystical Glassmorphism UI
 st.set_page_config(
@@ -14,44 +21,31 @@ st.set_page_config(
 st.markdown(
     """
 <style>
-    /* Dark Cosmic Background */
     .stApp {
         background: linear-gradient(135deg, #090614 0%, #120b29 50%, #1e0a2d 100%);
         color: #e2e8f0;
     }
-    
-    /* Sidebar styling */
     section[data-testid="stSidebar"] {
         background-color: rgba(12, 8, 24, 0.95) !important;
         border-right: 1px solid rgba(229, 193, 88, 0.25);
     }
-    
-    /* Chat Message Styling */
     .stChatMessage {
         border-radius: 12px !important;
         padding: 14px !important;
         margin-bottom: 12px !important;
     }
-    
-    /* User Message */
     div[data-testid="stChatMessage"]:nth-child(even) {
         background-color: rgba(126, 34, 206, 0.15) !important;
         border: 1px solid rgba(168, 85, 247, 0.3) !important;
     }
-    
-    /* Assistant Message */
     div[data-testid="stChatMessage"]:nth-child(odd) {
         background-color: rgba(255, 255, 255, 0.04) !important;
         border: 1px solid rgba(229, 193, 88, 0.25) !important;
     }
-    
-    /* Input Box */
     .stChatInputContainer {
         border-radius: 16px !important;
         border: 1px solid rgba(229, 193, 88, 0.4) !important;
     }
-    
-    /* Custom Header */
     .title-text {
         background: linear-gradient(90deg, #fef08a 0%, #d97706 50%, #c084fc 100%);
         -webkit-background-clip: text;
@@ -103,7 +97,13 @@ st.markdown(
 )
 st.markdown("---")
 
-# 4. System Instruction for Gemini (70 Years Experience Master Astrologer Persona)
+# Package Missing Alert
+if not HAS_GENAI:
+    st.warning(
+        "⚠️ `google-generativeai` package is currently installing... Please make sure `requirements.txt` is committed on GitHub and tap 'Reboot App' in Streamlit menu if needed!"
+    )
+
+# 4. System Instruction for Gemini
 SYSTEM_INSTRUCTION = f"""
 You are an expert, deeply analytical Vedic Astrologer with 70 years of experience in Parashari Jyotish, Jaimini Sutras, Dashas, and Gochar (planetary transits). 
 You are speaking directly to a seeker with the following fixed birth chart details:
@@ -147,6 +147,12 @@ if user_prompt := st.chat_input(
         )
         st.stop()
 
+    if not HAS_GENAI:
+        st.error(
+            "⚠️ Installing `google-generativeai` package on Streamlit server... Please wait a few seconds and try again!"
+        )
+        st.stop()
+
     # Add User Message to Chat UI & Session Memory
     st.session_state.messages.append({"role": "user", "content": user_prompt})
     with st.chat_message("user"):
@@ -187,5 +193,4 @@ if user_prompt := st.chat_input(
     except Exception as e:
         st.error(
             f"An error occurred while connecting to Gemini AI: {str(e)}. Please check your API Key."
-        )
-        
+)
