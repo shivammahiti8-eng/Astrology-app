@@ -4,7 +4,7 @@ import urllib.error
 import urllib.request
 import streamlit as st
 
-# 1. Page Configuration & Custom Mystical Dark UI
+# 1. Page Configuration & Custom Mystical High-Contrast Dark UI
 st.set_page_config(
     page_title="Vedic AI Cosmic Guru",
     page_icon="🌌",
@@ -15,44 +15,87 @@ st.set_page_config(
 st.markdown(
     """
 <style>
+    /* Background & Main Color Adjustments for Maximum Contrast */
     .stApp {
-        background: linear-gradient(135deg, #090614 0%, #120b29 50%, #1e0a2d 100%);
-        color: #e2e8f0;
+        background: linear-gradient(135deg, #0a0618 0%, #11092b 50%, #1a0826 100%);
+        color: #f8fafc !important;
     }
+    
+    /* Sidebar Styling */
     section[data-testid="stSidebar"] {
-        background-color: rgba(12, 8, 24, 0.95) !important;
-        border-right: 1px solid rgba(229, 193, 88, 0.25);
+        background-color: #0c081d !important;
+        border-right: 1px solid rgba(234, 179, 8, 0.3);
     }
+    section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] span, section[data-testid="stSidebar"] label {
+        color: #f1f5f9 !important;
+    }
+
+    /* Message Cards - High Contrast Text Fix */
     .stChatMessage {
         border-radius: 12px !important;
-        padding: 14px !important;
+        padding: 16px !important;
         margin-bottom: 12px !important;
+        color: #f8fafc !important;
     }
+    
+    /* User Message Container */
     div[data-testid="stChatMessage"]:nth-child(even) {
-        background-color: rgba(126, 34, 206, 0.15) !important;
-        border: 1px solid rgba(168, 85, 247, 0.3) !important;
+        background-color: rgba(88, 28, 135, 0.45) !important;
+        border: 1px solid #a855f7 !important;
+        color: #ffffff !important;
     }
+    
+    /* Assistant Message Container */
     div[data-testid="stChatMessage"]:nth-child(odd) {
-        background-color: rgba(255, 255, 255, 0.04) !important;
-        border: 1px solid rgba(229, 193, 88, 0.25) !important;
+        background-color: rgba(15, 23, 42, 0.8) !important;
+        border: 1px solid #eab308 !important;
+        color: #f8fafc !important;
     }
-    .stChatInputContainer {
-        border-radius: 16px !important;
-        border: 1px solid rgba(229, 193, 88, 0.4) !important;
+
+    /* Target all text elements in chat to prevent low contrast invisible text */
+    div[data-testid="stChatMessage"] p, 
+    div[data-testid="stChatMessage"] li, 
+    div[data-testid="stChatMessage"] span, 
+    div[data-testid="stChatMessage"] h1, 
+    div[data-testid="stChatMessage"] h2, 
+    div[data-testid="stChatMessage"] h3 {
+        color: #f8fafc !important;
     }
+
+    /* Button Styling */
+    .stButton>button {
+        color: #fef08a !important;
+        background-color: #1e1b4b !important;
+        border: 1px solid #eab308 !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        transition: all 0.2s ease-in-out;
+    }
+    .stButton>button:hover {
+        background-color: #312e81 !important;
+        border-color: #fde047 !important;
+        color: #ffffff !important;
+    }
+
+    /* Header Title Formatting */
     .title-text {
-        background: linear-gradient(90deg, #fef08a 0%, #d97706 50%, #c084fc 100%);
+        background: linear-gradient(90deg, #fef08a 0%, #f59e0b 50%, #c084fc 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         font-weight: 800;
         text-align: center;
+    }
+    .sub-text {
+        color: #38bdf8 !important;
+        text-align: center;
+        font-weight: 500;
     }
 </style>
 """,
     unsafe_allow_html=True,
 )
 
-# 2. Sidebar Setup & Key Sanitization
+# 2. Sidebar Setup & Profile Parameters
 st.sidebar.markdown("## 🔮 Astrological Profile")
 
 birth_date = st.sidebar.date_input("Date of Birth", value=datetime(2008, 12, 26))
@@ -64,7 +107,7 @@ birth_place = st.sidebar.text_input(
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 🪐 Chart Parameters")
 st.sidebar.markdown("**Lagna (Ascendant):** Sagittarius / Dhanu 🏹")
-st.sidebar.markdown("**Moon Sign (Rashi):** Scorpio / Vrischika 抓")
+st.sidebar.markdown("**Moon Sign (Rashi):** Scorpio / Vrischika ♏")
 st.sidebar.markdown("**Lagna Lord:** Jupiter (Guru)")
 st.sidebar.markdown("---")
 
@@ -78,10 +121,10 @@ raw_api_key = st.sidebar.text_input(
     "Enter Gemini API Key:",
     value=default_key,
     type="password",
-    help="Get your free key at aistudio.google.com",
+    help="Get your key at aistudio.google.com",
 )
 
-# Clean and sanitize API key string (strips whitespace, quotes, or accidental prefixes)
+# Clean and sanitize API key string
 clean_api_key = (
     raw_api_key.strip()
     .replace('"', "")
@@ -100,21 +143,21 @@ st.markdown(
     unsafe_allow_html=True,
 )
 st.markdown(
-    "<p style='text-align: center; color: #a7f3d0;'>Conversational Jyotish Intelligence • Past Verification Engine • Deep Future Dynamics</p>",
+    "<p class='sub-text'>Conversational Jyotish Intelligence • Past Retrospective (2008–2020) • Future Dynamics</p>",
     unsafe_allow_html=True,
 )
 st.markdown("---")
 
-# Quick Prompt Helper Button for Past Verification
+# Quick Prompt Helper Buttons
 col1, col2 = st.columns(2)
 with col1:
-    if st.button("📜 Verify My Past (Peep Into History)"):
-        st.session_state.pending_prompt = "Analyze my past life phases over the last 3-5 years (e.g., 2021 to 2025) using my Dasha timeline and major transits. Describe what shifts occurred in my mindset, health, education, or personal life so I can verify your accuracy."
+    if st.button("📜 Verify My Past (2008 to 2020 Retrospective)"):
+        st.session_state.pending_prompt = "Analyze my past life phases strictly from my birth year (2008) up to 2020 using my Dasha timeline and planetary transits. Detail the psychological shifts, childhood development, health, and family/academic dynamics across these exact years (2008-2020) so I can verify your accuracy."
 with col2:
     if st.button("🔮 Forecast My Future Horizons"):
         st.session_state.pending_prompt = "Analyze my upcoming planetary transits and Dasha cycles for the next 12 to 36 months. Break down career, physical growth, wealth compounding, and major life timing."
 
-# 4. Master System Instruction (Vedic Expert + Past Verification Mandate)
+# 4. Master System Instruction
 SYSTEM_INSTRUCTION = f"""
 You are an expert, deeply analytical Vedic Astrologer with 70 years of experience in Parashari Jyotish, Jaimini Sutras, Dashas, and Gochar (planetary transits). 
 You are speaking directly to a seeker with the following birth chart details:
@@ -125,30 +168,30 @@ You are speaking directly to a seeker with the following birth chart details:
 - Moon Sign (Rashi): Scorpio (Vrischika) - Ruled by Mars
 
 CORE MANDATES:
-1. PAST RETROSPECTIVE VERIFICATION (PEEPING INTO THE PAST):
-   - Whenever asked about past events or general predictions, include a dedicated "📜 Past Timeline Verification" section.
-   - Calculate past Mahadashas, Antardashas, and major planetary transits (e.g., Saturn's Sade Sati / Kantaka Shani, Rahu-Ketu axis shifts, Jupiter transits) for key past years (2020-2025).
-   - Detail specific past psychological themes, emotional trials, academic/career pivots, or health/stamina shifts. This past accuracy builds absolute trust so the seeker can verify your logic against their real experience before looking ahead.
+1. PAST RETROSPECTIVE VERIFICATION (EXCLUSIVELY 2008 TO 2020):
+   - When asked about past events or general verification, focus EXCLUSIVELY on the timeline from birth year (2008) UP TO 2020 ONLY.
+   - Calculate Mahadashas, Antardashas, and key planetary transits (e.g., Saturn transits, Rahu-Ketu shifts, Jupiter transits) during 2008–2020.
+   - Describe specific psychological themes, childhood developments, academic shifts, health factors, or family environment changes during these exact years (2008-2020).
+   - This precise past accuracy allows the seeker to cross-check your astrological logic with their real past experiences up to 2020 before accepting future forecasts.
 
 2. HIGH-DEPTH UNRESTRICTED ANALYSIS:
-   - Provide comprehensive, highly descriptive, and deeply analytical readings. Avoid short, generic horoscopes.
-   - Explain specific house lordships, aspects (Drishti), transit dynamics, and practical psychological/actionable remedies.
+   - Provide clear, well-structured, and deeply analytical readings. Avoid vague or generic horoscopes.
+   - Explain house lordships, aspects (Drishti), transit dynamics, and practical actionable remedies.
 
 3. CONVERSATIONAL MEMORY & DYNAMIC FOLLOW-UPS:
-   - Maintain full awareness of previous messages in this conversation.
+   - Maintain full awareness of previous messages in this conversation session.
    - ALWAYS END EVERY RESPONSE with a section formatted exactly like this:
 
 ---
 ### 🔮 Suggested Follow-Up Questions:
-* [Option 1: A deep logical question verifying a specific past timeframe]
+* [Option 1: A specific question cross-checking a year between 2008 and 2020]
 * [Option 2: A question exploring upcoming transit timing or horizons]
-* [Option 3: A practical question regarding physical growth, remedies, or strategy]
+* [Option 3: A practical question regarding remedies, focus, or growth strategy]
 """
 
 
-# Direct REST API Engine targeting updated gemini-2.5-flash endpoint
+# REST API Call using gemini-2.5-flash
 def call_gemini_api(key, system_instruction, chat_history, current_prompt):
-    # Updated to gemini-2.5-flash
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={key}"
 
     contents = []
@@ -179,18 +222,18 @@ def call_gemini_api(key, system_instruction, chat_history, current_prompt):
         raise Exception(f"Request failed: {str(e)}")
 
 
-# 5. Chat History & Logic Setup
+# 5. Chat History & Execution Loop
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display existing conversation
+# Render past chat history
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Capture input from chat box or prompt helper buttons
+# User Chat Input
 user_prompt = st.chat_input(
-    "Ask anything about your past years, future transits, career, or life..."
+    "Ask anything about your past (2008-2020), future transits, career, or life..."
 )
 
 if "pending_prompt" in st.session_state and st.session_state.pending_prompt:
@@ -204,15 +247,15 @@ if user_prompt:
         )
         st.stop()
 
-    # Append user message
+    # Append and render user message
     st.session_state.messages.append({"role": "user", "content": user_prompt})
     with st.chat_message("user"):
         st.markdown(user_prompt)
 
-    # Generate response
+    # Call AI model and render response
     with st.chat_message("assistant"):
         with st.spinner(
-            "Analyzing past Dasha timelines, transits, and planetary positions..."
+            "Analyzing Dasha timelines, transits, and planetary positions..."
         ):
             try:
                 response_text = call_gemini_api(
@@ -227,4 +270,3 @@ if user_prompt:
                 )
             except Exception as e:
                 st.error(f"Error generating response: {str(e)}")
-    
