@@ -4,7 +4,7 @@ import urllib.error
 import urllib.request
 import streamlit as st
 
-# 1. Page Configuration & Custom Mystical Glassmorphism UI
+# 1. Page Configuration & Custom Mystical Dark UI
 st.set_page_config(
     page_title="Vedic AI Cosmic Guru",
     page_icon="🌌",
@@ -12,7 +12,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Custom CSS for Dark Cosmic Chat Interface
 st.markdown(
     """
 <style>
@@ -53,7 +52,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# 2. Sidebar: Birth Chart Profile & API Key
+# 2. Sidebar Setup & Key Sanitization
 st.sidebar.markdown("## 🔮 Astrological Profile")
 
 birth_date = st.sidebar.date_input("Date of Birth", value=datetime(2008, 12, 26))
@@ -65,16 +64,30 @@ birth_place = st.sidebar.text_input(
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 🪐 Chart Parameters")
 st.sidebar.markdown("**Lagna (Ascendant):** Sagittarius / Dhanu 🏹")
-st.sidebar.markdown("**Moon Sign (Rashi):** Scorpio / Vrischika 🦂")
+st.sidebar.markdown("**Moon Sign (Rashi):** Scorpio / Vrischika 抓")
 st.sidebar.markdown("**Lagna Lord:** Jupiter (Guru)")
 st.sidebar.markdown("---")
 
-# API Key input for Gemini AI Engine
+# Retrieve secret if set, or let user input it
+default_key = ""
+if "GEMINI_API_KEY" in st.secrets:
+    default_key = str(st.secrets["GEMINI_API_KEY"])
+
 st.sidebar.markdown("### 🔑 AI Connection")
-api_key = st.sidebar.text_input(
+raw_api_key = st.sidebar.text_input(
     "Enter Gemini API Key:",
+    value=default_key,
     type="password",
-    help="Get your free API key at aistudio.google.com to power full conversational AI depth.",
+    help="Get your free key at aistudio.google.com",
+)
+
+# Clean and sanitize API key string (strips whitespace, quotes, or accidental prefixes)
+clean_api_key = (
+    raw_api_key.strip()
+    .replace('"', "")
+    .replace("'", "")
+    .replace("GEMINI_API_KEY =", "")
+    .strip()
 )
 
 if st.sidebar.button("🗑️ Clear Chat / Start New Session"):
@@ -87,39 +100,56 @@ st.markdown(
     unsafe_allow_html=True,
 )
 st.markdown(
-    "<p style='text-align: center; color: #a7f3d0;'>Conversational Jyotish Intelligence • Full Memory • Dynamic Follow-ups</p>",
+    "<p style='text-align: center; color: #a7f3d0;'>Conversational Jyotish Intelligence • Past Verification Engine • Deep Future Dynamics</p>",
     unsafe_allow_html=True,
 )
 st.markdown("---")
 
-# 4. System Instruction for Gemini
+# Quick Prompt Helper Button for Past Verification
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("📜 Verify My Past (Peep Into History)"):
+        st.session_state.pending_prompt = "Analyze my past life phases over the last 3-5 years (e.g., 2021 to 2025) using my Dasha timeline and major transits. Describe what shifts occurred in my mindset, health, education, or personal life so I can verify your accuracy."
+with col2:
+    if st.button("🔮 Forecast My Future Horizons"):
+        st.session_state.pending_prompt = "Analyze my upcoming planetary transits and Dasha cycles for the next 12 to 36 months. Break down career, physical growth, wealth compounding, and major life timing."
+
+# 4. Master System Instruction (Vedic Expert + Past Verification Mandate)
 SYSTEM_INSTRUCTION = f"""
 You are an expert, deeply analytical Vedic Astrologer with 70 years of experience in Parashari Jyotish, Jaimini Sutras, Dashas, and Gochar (planetary transits). 
-You are speaking directly to a seeker with the following fixed birth chart details:
+You are speaking directly to a seeker with the following birth chart details:
 - Date of Birth: {birth_date.strftime("%d December %Y")}
 - Time of Birth: {birth_time.strftime("%I:%M %p")}
 - Place of Birth: {birth_place}
 - Lagna (Ascendant): Sagittarius (Dhanu) - Ruled by Jupiter
 - Moon Sign (Rashi): Scorpio (Vrischika) - Ruled by Mars
 
-YOUR MANDATE:
-1. Provide EXTREMELY HIGH DEPTH, DESCRIPTIVE, and UNRESTRICTED astrological analysis. Avoid short, generic, surface-level horoscopes.
-2. Calculate and discuss specific planetary dynamics: House Lordship, Aspects (Drishti), Mahadasha/Antardasha influences, and Transit cycles (Saturn/Shani, Jupiter/Guru, Rahu/Ketu).
-3. Connect astrological principles directly to practical psychological insights, career vectors, physical stamina/health, wealth compounding, and long-term timing over the next 30 years.
-4. Maintain full conversational context—refer back to previous questions or topics discussed in the chat history.
-5. ALWAYS END EVERY SINGLE RESPONSE with a dedicated section formatted exactly like this:
+CORE MANDATES:
+1. PAST RETROSPECTIVE VERIFICATION (PEEPING INTO THE PAST):
+   - Whenever asked about past events or general predictions, include a dedicated "📜 Past Timeline Verification" section.
+   - Calculate past Mahadashas, Antardashas, and major planetary transits (e.g., Saturn's Sade Sati / Kantaka Shani, Rahu-Ketu axis shifts, Jupiter transits) for key past years (2020-2025).
+   - Detail specific past psychological themes, emotional trials, academic/career pivots, or health/stamina shifts. This past accuracy builds absolute trust so the seeker can verify your logic against their real experience before looking ahead.
+
+2. HIGH-DEPTH UNRESTRICTED ANALYSIS:
+   - Provide comprehensive, highly descriptive, and deeply analytical readings. Avoid short, generic horoscopes.
+   - Explain specific house lordships, aspects (Drishti), transit dynamics, and practical psychological/actionable remedies.
+
+3. CONVERSATIONAL MEMORY & DYNAMIC FOLLOW-UPS:
+   - Maintain full awareness of previous messages in this conversation.
+   - ALWAYS END EVERY RESPONSE with a section formatted exactly like this:
 
 ---
 ### 🔮 Suggested Follow-Up Questions:
-* [Option 1: A deep logical follow-up question related to what was just discussed]
-* [Option 2: A question exploring a specific timing or transit horizon]
-* [Option 3: A question regarding remedies, mindset, or practical steps]
+* [Option 1: A deep logical question verifying a specific past timeframe]
+* [Option 2: A question exploring upcoming transit timing or horizons]
+* [Option 3: A practical question regarding physical growth, remedies, or strategy]
 """
 
 
-# Direct REST API helper (uses Python standard library, requiring no pip packages)
+# Direct REST API Engine targeting updated gemini-2.5-flash endpoint
 def call_gemini_api(key, system_instruction, chat_history, current_prompt):
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={key}"
+    # Updated to gemini-2.5-flash
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={key}"
 
     contents = []
     for msg in chat_history:
@@ -144,44 +174,49 @@ def call_gemini_api(key, system_instruction, chat_history, current_prompt):
             return result["candidates"][0]["content"]["parts"][0]["text"]
     except urllib.error.HTTPError as e:
         error_info = e.read().decode("utf-8")
-        raise Exception(f"API Key or Request Error ({e.code}): {error_info}")
+        raise Exception(f"API Error ({e.code}): {error_info}")
     except Exception as e:
         raise Exception(f"Request failed: {str(e)}")
 
 
-# 5. Initialize Chat History Session State
+# 5. Chat History & Logic Setup
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display existing chat messages from memory
+# Display existing conversation
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 6. Chat Input & AI Generation Logic
-if user_prompt := st.chat_input(
-    "Ask any detailed question about your Kundali, transits, career, life, or future..."
-):
+# Capture input from chat box or prompt helper buttons
+user_prompt = st.chat_input(
+    "Ask anything about your past years, future transits, career, or life..."
+)
 
-    if not api_key.strip():
+if "pending_prompt" in st.session_state and st.session_state.pending_prompt:
+    user_prompt = st.session_state.pending_prompt
+    st.session_state.pending_prompt = None
+
+if user_prompt:
+    if not clean_api_key:
         st.warning(
-            "⚠️ Please enter your free Gemini API Key in the left sidebar to start chatting!"
+            "⚠️ Please enter or paste your Gemini API Key in the left sidebar to start!"
         )
         st.stop()
 
-    # Add User Message to Chat UI & Session Memory
+    # Append user message
     st.session_state.messages.append({"role": "user", "content": user_prompt})
     with st.chat_message("user"):
         st.markdown(user_prompt)
 
-    # Call Gemini via direct API request
+    # Generate response
     with st.chat_message("assistant"):
         with st.spinner(
-            "Analyzing Kundali, house lords, and transit matrices..."
+            "Analyzing past Dasha timelines, transits, and planetary positions..."
         ):
             try:
                 response_text = call_gemini_api(
-                    api_key.strip(),
+                    clean_api_key,
                     SYSTEM_INSTRUCTION,
                     st.session_state.messages[:-1],
                     user_prompt,
@@ -191,4 +226,5 @@ if user_prompt := st.chat_input(
                     {"role": "assistant", "content": response_text}
                 )
             except Exception as e:
-                st.error(f"Error generating reading: {str(e)}")
+                st.error(f"Error generating response: {str(e)}")
+    
