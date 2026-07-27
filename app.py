@@ -229,29 +229,3 @@ if user_prompt:
         st.error(
             "⚙️ **Configuration Required:** Please add your `GEMINI_API_KEYS` (separated by commas) into your Streamlit Cloud App Settings under 'Secrets'."
         )
-        st.stop()
-
-    st.session_state.messages.append({"role": "user", "content": user_prompt})
-    with st.chat_message("user"):
-        st.markdown(user_prompt)
-
-    with st.chat_message("assistant"):
-        with st.spinner(
-            "Consulting cosmic alignments across multi-model channels..."
-        ):
-            try:
-                response_text = call_gemini_api_advanced(
-                    api_keys_list,
-                    SYSTEM_INSTRUCTION,
-                    st.session_state.messages[:-1],
-                    user_prompt,
-                )
-                st.markdown(response_text)
-                st.session_state.messages.append(
-                    {"role": "assistant", "content": response_text}
-                )
-            except Exception as e:
-                st.error(
-                    f"⚠️ **Traffic Peak Reached:** Both keys and fallback channels are momentarily cooling down. Please wait 15 seconds and resend your prompt."
-                )
-                https://streamlit.io/playground?example=hello&code=H4sIAAAAAAAAA02QQU7EMAxF9zmFJxvaSvQAcwLEdpBYIBZu406iSZPKcSlzBlacgCtyBNwOwxBFkZN8P387jFNmgSJMOMYggEUvxhRpJUikyj5QjBkOV8E9MXx_fX7YetWMyCeXl1QZ0GWthS148qGAboQp4vnIeU4OhsxwzjNIBuHzjQionx7fCIY5tWA2QtM8eWK6K7BnDKnLy0vJMM69f90gPSbo5hDdrmm2hO14JpiYJmRyWnugBegdxylS-V_9SGvDyEKuhce5yCW5j6E_QU4gnpQtkpN20GU1tjp0ofQaMywe5c-Dy5fkJYi_tdTCdR6mNiYMWq69ECt7IIV1qENV_s7W-026Cn7fqtr8AJy2AJKWAQAA
