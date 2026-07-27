@@ -3,18 +3,18 @@ import streamlit as st
 
 # 1. Page Configuration
 st.set_page_config(
-    page_title="Personal Planetary Transit Engine",
-    page_icon="🌌",
+    page_title="Vedic Transit & Prediction Engine",
+    page_icon="🔮",
     layout="centered",
 )
 
-st.title("🌌 30-Year Planetary Transit & Life Focus Engine")
+st.title("🔮 AI Vedic Astrology & 30-Year Transit Engine")
 st.write(
-    "Analyze major planetary transits (Saturn, Jupiter, Rahu/Ketu) for any day over the next 30 years."
+    "Ask any question or search any topic to get real-time planetary guidance and transit analysis."
 )
 
-# 2. Sidebar: Your Birth Information (Set as Fixed Defaults)
-st.sidebar.header("👤 Your Birth Details")
+# 2. Sidebar: Fixed Default Birth Information
+st.sidebar.header("👤 Your Birth Profile")
 birth_date = st.sidebar.date_input(
     "Date of Birth",
     value=datetime(2008, 12, 26),
@@ -25,76 +25,170 @@ birth_place = st.sidebar.text_input(
     "Place of Birth", value="Bhandara Road, Maharashtra"
 )
 
-# 3. Main Interface: Target Prediction Date
-st.subheader("📅 Select Future Date for Prediction")
+st.sidebar.markdown("---")
+st.sidebar.markdown("**Ascendant (Lagna):** Sagittarius / Dhanu")
+st.sidebar.markdown("**Moon Sign (Rashi):** Scorpio / Vrischika")
 
+# 3. Target Date Selection
+st.subheader("📅 Step 1: Choose Time Horizon")
 today = datetime.today().date()
 max_future_date = today + timedelta(days=365 * 30)
 
 target_date = st.date_input(
-    "Choose any target date within the next 30 years:",
+    "Select target date for your reading (up to 30 years ahead):",
     value=today,
     min_value=today,
     max_value=max_future_date,
 )
 
+# 4. Interactive Question Search Bar
+st.subheader("❓ Step 2: Search or Ask Any Question")
+user_question = st.text_input(
+    "Type your question below:",
+    placeholder="e.g., 'How will my career look in 2028?', 'Will I clear my exams?', 'What about health & fitness?'",
+)
 
-# 4. Planetary Cycle Helper Functions
-def get_jupiter_theme(target_year, birth_year):
-    cycle_years = (target_year - birth_year) % 12
-    if cycle_years in [0, 4, 8]:
-        return "Expansion, higher learning, and mentor alignment."
-    elif cycle_years in [1, 5, 9]:
-        return "Consolidation of gains, financial focus, and steady growth."
+
+# 5. Astrological Interpretation Engine
+def analyze_question_and_transit(question, target_dt, bdate):
+    age = target_dt.year - bdate.year
+    q_lower = question.lower()
+
+    # Dynamic Categorization based on Query Keywords
+    if any(
+        w in q_lower
+        for w in [
+            "job",
+            "career",
+            "work",
+            "business",
+            "exam",
+            "study",
+            "success",
+            "future",
+            "pass",
+            "score",
+        ]
+    ):
+        topic = "Career, Education & Karma Vector"
+        house = "10th House (Karma Bhava) & 5th House (Vidya Bhava)"
+        primary_planet = "Jupiter (Guru) & Saturn (Shani)"
+        guidance = (
+            f"Around age {age}, your planetary transits heavily reward structured discipline and technical skill building. "
+            "Saturn demands consistent daily execution without shortcuts, while Jupiter creates opportunities for recognition. "
+            "Focus on long-term skill compounding rather than immediate validation."
+        )
+    elif any(
+        w in q_lower
+        for w in [
+            "money",
+            "wealth",
+            "finance",
+            "rich",
+            "income",
+            "gain",
+            "car",
+            "house",
+            "buy",
+        ]
+    ):
+        topic = "Wealth, Assets & Expansion"
+        house = "2nd House (Dhana Bhava) & 11th House (Labha Bhava)"
+        primary_planet = "Mercury (Budh) & Venus (Shukra)"
+        guidance = (
+            f"At age {age}, financial growth aligns with logical planning and strategic investments. "
+            "Avoid high-risk speculation during key Rahu cycles; focus instead on compounding assets, clear budgeting, and building solid income streams."
+        )
+    elif any(
+        w in q_lower
+        for w in [
+            "love",
+            "marriage",
+            "partner",
+            "relationship",
+            "girl",
+            "friend",
+            "trust",
+        ]
+    ):
+        topic = "Relationships, Trust & Partnerships"
+        house = "7th House (Yuvati Bhava) & 5th House (Kama Bhava)"
+        primary_planet = "Venus (Shukra) & Jupiter (Guru)"
+        guidance = (
+            "Transits emphasize emotional clarity, mutual respect, and humor. "
+            "Relationships thrive when grounded in strong friendship first. Keep communication logic-driven, honest, and supportive."
+        )
+    elif any(
+        w in q_lower
+        for w in [
+            "health",
+            "fitness",
+            "body",
+            "gym",
+            "mind",
+            "stress",
+            "energy",
+            "workout",
+        ]
+    ):
+        topic = "Health, Physical Vitality & Mindset"
+        house = "1st House (Tanu Bhava) & 6th House (Arogya Bhava)"
+        primary_planet = "Sun (Surya) & Mars (Mangal)"
+        guidance = (
+            f"Physical strength and mental endurance are highlighted for {target_dt.year}. "
+            "Mars transit energy supports intensive physical conditioning, body building, and disciplined routines. Channel high energy into heavy physical training."
+        )
     else:
-        return "Reflection, internal learning, and skill refinement."
-
-
-def get_saturn_theme(target_year, birth_year):
-    cycle = (target_year - birth_year) % 30
-    if cycle < 7:
-        return "Foundation building: High discipline required; establishing career roots."
-    elif cycle < 15:
-        return "Action & Execution: Testing your abilities in real-world challenges."
-    elif cycle < 22:
-        return "Harvest & Maturity: Seeing outcomes of efforts made over the last decade."
-    else:
-        return "Restructuring: Clearing out old patterns to prepare for the next 30-year cycle."
-
-
-# 5. Generate Prediction Trigger
-if st.button("🔮 Calculate Planetary Energy & Prediction"):
-    st.markdown("---")
-    st.success(
-        f"**Prediction Profile Generated for:** {target_date.strftime('%B %d, %Y')}"
-    )
-
-    col1, col2 = st.columns(2)
-    with col1:
-        st.info(f"**Birth Date:** {birth_date.strftime('%d-%m-%Y')}")
-        st.info(f"**Birth Time:** {birth_time.strftime('%I:%M %p')}")
-        st.info(f"**Birth Place:** {birth_place}")
-    with col2:
-        st.info(f"**Target Year:** {target_date.year}")
-        st.info(
-            f"**Future Offset:** {target_date.year - today.year} years from today"
+        topic = "General Destiny & Life Cycle Direction"
+        house = "1st House (Self Evolution) & 9th House (Bhagya Bhava)"
+        primary_planet = "Jupiter (Guru Alignment) & Rahu/Ketu Axis"
+        guidance = (
+            f"Looking at your chart for {target_dt.strftime('%B %Y')} (Age ~{age}), overall planetary transits urge self-mastery, "
+            "building personal strength, and executing long-term projects. Focus on aligning daily action with your ultimate growth vector."
         )
 
-    # Transit Analysis Engine Output
-    st.subheader("🪐 Major Planetary Transits on This Date")
+    return topic, house, primary_planet, guidance
 
-    j_theme = get_jupiter_theme(target_date.year, birth_date.year)
-    s_theme = get_saturn_theme(target_date.year, birth_date.year)
 
-    st.markdown(f"""
-    * **Saturn Transits (Shani Phase):** {s_theme}
-    * **Jupiter Transits (Guru Alignment):** {j_theme}
-    * **General Energy Focus:** Balance disciplined execution with continuous learning. 
-    """)
+# 6. Action Button
+if st.button("🔮 Analyze Planetary Transit Energy"):
+    if not user_question.strip():
+        st.warning(
+            "Please type a question in the search bar above to generate a tailored reading!"
+        )
+    else:
+        st.markdown("---")
+        st.success(
+            f"**Reading Generated for Target Date:** {target_date.strftime('%d %B %Y')}"
+        )
 
-    st.subheader("📜 Predictive Guidance Summary")
-    st.write(f"""
-    Calculated for **{birth_place}** (Born **26 Dec 2008 at 06:30 AM**): During the week of **{target_date.strftime('%d %B %Y')}**, your primary growth vector centers on long-term sustainability rather than short-term shortcuts. 
-    Focus on structured effort, keeping promises to yourself, and building skills that compound over time.
-    """)
-    
+        topic, house, primary_planet, guidance = analyze_question_and_transit(
+            user_question, target_date, birth_date
+        )
+
+        st.markdown(f"### 🎯 Query: *\"{user_question}\"*")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.info(f"**Birth Place:** {birth_place}")
+            st.info(
+                f"**Birth Details:** {birth_date.strftime('%d-%m-%Y')} | {birth_time.strftime('%I:%M %p')}"
+            )
+            st.info(f"**Core Topic:** {topic}")
+        with col2:
+            st.info(
+                f"**Target Year:** {target_date.year} (Age ~{target_date.year - birth_date.year})"
+            )
+            st.info(f"**Active House Focus:** {house}")
+            st.info(f"**Key Planets:** {primary_planet}")
+
+        st.subheader("📜 Detailed Transit Analysis & Prediction")
+        st.write(guidance)
+
+        st.subheader("💡 Strategic Action Plan")
+        st.markdown("""
+        * **Primary Focus:** Leverage disciplined daily action (Saturn) guided by clear vision (Jupiter).
+        * **Mindset:** Use challenges as direct fuel for skill development and personal strength.
+        * **Core Rule:** Action creates outcomes—planetary positions show where energy flows, but your choices dictate the result.
+        """)
+            
