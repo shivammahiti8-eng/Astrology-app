@@ -1,3 +1,6 @@
+    from datetime import datetime, timedelta
+import streamlit as st
+
 # 1. Page Configuration
 st.set_page_config(
     page_title="30-Year Planetary Transit Engine",
@@ -90,3 +93,4 @@ if st.button("🔮 Calculate Planetary Energy & Prediction"):
     During the week of **{target_date.strftime('%d %B %Y')}**, your primary growth vector centers on long-term sustainability rather than short-term shortcuts. 
     Focus on structured effort, keeping promises to yourself, and building skills that compound over time.
     """)
+    
