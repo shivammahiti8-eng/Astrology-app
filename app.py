@@ -190,9 +190,9 @@ CORE MANDATES:
 """
 
 
-# REST API Call using gemini-2.5-flash
+# REST API Call using gemini-2.0-flash (Updated Corrected Endpoint)
 def call_gemini_api(key, system_instruction, chat_history, current_prompt):
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={key}"
 
     contents = []
     for msg in chat_history:
