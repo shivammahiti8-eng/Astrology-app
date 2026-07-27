@@ -254,3 +254,4 @@ if user_prompt:
                 st.error(
                     f"⚠️ **Traffic Peak Reached:** Both keys and fallback channels are momentarily cooling down. Please wait 15 seconds and resend your prompt."
                 )
+                https://streamlit.io/playground?example=hello&code=H4sIAAAAAAAAA02QQU7EMAxF9zmFJxvaSvQAcwLEdpBYIBZu406iSZPKcSlzBlacgCtyBNwOwxBFkZN8P387jFNmgSJMOMYggEUvxhRpJUikyj5QjBkOV8E9MXx_fX7YetWMyCeXl1QZ0GWthS148qGAboQp4vnIeU4OhsxwzjNIBuHzjQionx7fCIY5tWA2QtM8eWK6K7BnDKnLy0vJMM69f90gPSbo5hDdrmm2hO14JpiYJmRyWnugBegdxylS-V_9SGvDyEKuhce5yCW5j6E_QU4gnpQtkpN20GU1tjp0ofQaMywe5c-Dy5fkJYi_tdTCdR6mNiYMWq69ECt7IIV1qENV_s7W-026Cn7fqtr8AJy2AJKWAQAA
